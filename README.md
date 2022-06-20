@@ -1,2 +1,2 @@
-# wisielec
+# Wisielec
 Gra wisielec
