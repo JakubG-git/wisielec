@@ -1,25 +1,15 @@
 import pygame as pg
-from pygame.locals import *
-import sys
 import string
+from pygame.locals import *
 from random import random as rd
-
-
-
+pg.init()           
 pg.display.set_caption("Wisielec")
+FRAMES_PER_SECOND = 60
 WIDTH, HEIGHT = 720, 720
-DISPLAY = pg.display.set_mode((WIDTH, HEIGHT))
-pg.font.init()
 FONT = pg.font.SysFont("Arial", 30)
-FramesPerSecond = 60
+DISPLAY = pg.display.set_mode((WIDTH, HEIGHT))
 CLOCK = pg.time.Clock()
-pg.init()
-
-def draw_text(text, font, color, x, y):
-    textsurface = font.render(text, True, color)
-    textrect = textsurface.get_rect()
-    textrect.center = (x, y)
-    DISPLAY.blit(textsurface, textrect)
+CLICK = False
 
 class Obiekt:
     def __init__(self, slowo = "", zycie = 1, pudla = [], trafienia = []):
@@ -44,6 +34,7 @@ class Obiekt:
             f.close()
     def __str__(self):
         return "({0}, {1}, {2}, {3})".format(self.slowo, self.zycie, self.pudla, self.trafienia) # debbuging
+
 class Gra:
     def __init__(self, slowo = "Gra"):
         self.obiekt = Obiekt(slowo)
@@ -55,13 +46,18 @@ class Gra:
         self.wczytana_gra = False
         self.wygrana = False
         self.przegrana = False
-    def save(self):
-        file_name = (input("Podaj nazwe pliku: "))
-        self.obiekt.save(file_name)
+
+    def draw_text(self, text, font, color, x, y):
+        textsurface = font.render(text, True, color)
+        textrect = textsurface.get_rect()
+        textrect.center = (x, y)
+        DISPLAY.blit(textsurface, textrect)
+
+    def save(self, n = 0):
+        self.obiekt.save(f"save{n}.txt")
     
-    def load(self):
-        file_name = (input("Podaj nazwe pliku: "))
-        self.obiekt.load(file_name)
+    def load(self, n = 0):
+        self.obiekt.load(f"save{n}.txt")
         self.wczytana_gra = True
     
     def random_word(self) -> str:
@@ -71,22 +67,47 @@ class Gra:
         return slowa[int(len(slowa) * (rd()))][:-1]
 
     def stats(self):
-        print("Życia: ", self.obiekt.zycie)
-        print("Pudły: ", self.obiekt.pudla)
-        print("Trafienia: ", self.obiekt.trafienia)
+        self.draw_text(f"Życia: {self.obiekt.zycie}", FONT, (255,255,255), WIDTH/2, HEIGHT/2)
+        self.draw_text(f"Pudła: {self.obiekt.pudla}", FONT, (255,255,255), WIDTH/2, HEIGHT/2 + 30)
+        self.draw_text(f"Trafienia: {self.obiekt.trafienia}", FONT, (255,255,255), WIDTH/2, HEIGHT/2 + 60)
     
     def menu(self):
-        print("Witaj w grze Wisielec!")
-        print("1. Nowa gra")
-        print("2. Zapisz gre")
-        print("3. Wczytaj gre")
-        print("4. Twoje statystyki")
-        print("5. Wyjdz")
+        menu_options = list()
+        for i in range(5):
+            menu_options.append(pg.Rect(WIDTH/2 + 100, HEIGHT/2 + i * 30, 200, 30))
+        menu_running = True
+        while menu_running:
+            DISPLAY.fill((0,0,0))
+            self.draw_text("Witaj w grze Wisielec!", FONT, (255,255,255), WIDTH/2, 0)
+            mouse_x, mouse_y = pg.mouse.get_pos()
+            for index, option in enumerate(menu_options):
+                if option.collidepoint((mouse_x, mouse_y)):
+                    if CLICK:
+                        self.select(index)
+            for option in menu_options:
+                pg.draw.rect(DISPLAY, (255, 0, 0), option)
+
+            CLICK = False
+            for event in pg.event.get():
+                if event.type == QUIT:
+                    pg.quit()
+                    exit()
+                if event.type == KEYDOWN:
+                    if event.key == K_ESCAPE: 
+                        pg.quit()
+                        exit()
+                if event.type == MOUSEBUTTONDOWN:
+                    if event.button == 1:
+                        click = True
+            pg.display.update()
+            CLOCK.tick(FRAMES_PER_SECOND)
+
+            
+
+            
 
     def start(self):
         self.menu()
-        while(not self.select()):
-            self.menu()
 
     def win_loss_check(self):
         if self.obiekt.zycie == 0:
@@ -100,9 +121,7 @@ class Gra:
 
     def print_word(self):
         odgadniente_slowo  = [literka if literka in self.obiekt.trafienia else "_" for literka in self.obiekt.slowo]
-        for letter in odgadniente_slowo:
-            print(letter, end=" ")
-        print("")
+        pass
 
     def hit_n_miss(self):
         litera = input("Podaj literke: ")
@@ -115,28 +134,7 @@ class Gra:
             self.obiekt.zycie -= 1
 
     def end(self):
-        if self.wygrana or self.przegrana:
-            wybor = input("Czy chcesz rozpoczac nowa gre? (t/n)")
-            if wybor == "t":
-                self.start()
-            else:
-                self.stats()
-                self.quit()
-                exit()
-        else:
-            wybor = input("Czy chcesz zakończyć gre? (t/n)")
-            if wybor == "t":
-                self.obiekt.save("default.txt")
-                self.quit()
-                exit()
-            elif wybor == "n":
-                wybor2 = input("Czy chcesz zapisać? (t/n)")
-                if wybor2 == "t":
-                    self.save()
-                    self.quit()
-                    exit()
-            else:
-                pass
+        pass
         
     def new_game(self):
         print("Nowa gra!")
@@ -149,23 +147,18 @@ class Gra:
             self.end()
     def quit(self):
         print("Do zobaczenia!")
-    def select(self) -> bool:
-        wybor = int(input("Wybierz opcje: "))
-        if wybor == 1:
+    def select(self, selection):
+        if selection == 0:
             self.new_game()
-            return True
-        elif wybor == 2:
+        elif selection == 1:
             self.save()
-            return False
-        elif wybor == 3:
+        elif selection == 2:
             self.load()
-            return True
-        elif wybor == 4:
+        elif selection == 3:
             self.stats()
-            return False
-        elif wybor == 5:
+        elif selection == 4:
             self.quit()
-            return True
+
     def select_word(self):
         print("1. Losuj slowo")
         print("2. Wpisz slowo")
@@ -176,26 +169,10 @@ class Gra:
             self.obiekt.slowo = input("Podaj slowo: ")
         self.obiekt.zycie = len(self.obiekt.slowo)
 
-def main_menu(gra: Gra):
-    menu = True
-    while menu:
-        for event in pg.event.get():
-            if event.type == pg.QUIT:
-                pg.quit()
-                sys.exit()
-        DISPLAY.fill((0, 0, 0))
-        draw_text("Wisielec", FONT, (255, 255, 255), WIDTH/2, HEIGHT/2)
-        draw_text("Wciśnij Enter aby rozpocząć", FONT, (255, 255, 255), WIDTH/2, HEIGHT/2 + 50)
-        pg.display.update()
-        CLOCK.tick(FramesPerSecond)
-        if pg.key.get_pressed()[pg.K_RETURN]:
-            menu = False
-            gra.start()
-
 
 
 
 
 if __name__ == "__main__":
     gra = Gra()
-    main_menu(gra)
+
