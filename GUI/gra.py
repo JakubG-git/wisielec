@@ -1,6 +1,3 @@
-from curses import KEY_ENTER
-from importlib.resources import path
-from pickle import FALSE
 import pygame as pg
 import string
 from pygame.locals import *
@@ -51,7 +48,7 @@ class Obiekt:
         return "({0}, {1}, {2}, {3})".format(self.slowo, self.zycie, self.pudla, self.trafienia) # debbuging
 
 class Gra:
-    def __init__(self, slowo = "Gra"):
+    def __init__(self, slowo = ""):
         self.obiekt = Obiekt(slowo)
         self.wczytana_gra = False
         self.wygrana = False
@@ -164,7 +161,7 @@ class Gra:
     def new_game(self):
         if self.wygrana or self.przegrana:
             self.wygrana, self.przegrana = False, False
-            self.obiekt = Obiekt("Nowa Gra")
+            self.obiekt = Obiekt("")
         game_running = True
         if not self.wczytana_gra:
             self.select_word()
