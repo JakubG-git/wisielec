@@ -244,7 +244,7 @@ class Gra:
                         pg.quit()
                         exit()
                     if event.type == KEYDOWN:
-                        if (event.key == K_ESCAPE or event.key == KEY_ENTER or event.key == K_KP_ENTER)and len(self.obiekt.slowo) > 2:
+                        if (event.key == K_ESCAPE or event.key == K_RETURN or event.key == K_KP_ENTER)and len(self.obiekt.slowo) > 2:
                             end = True 
                         else:  
                             self.obiekt.slowo += event.unicode
